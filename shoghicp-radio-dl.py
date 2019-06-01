@@ -89,7 +89,7 @@ def main():
 
     # Ask for user input
     tracks = input(
-        f"\n{RED_EC}=> {WHITE_EC}Which tracks to download?{CLEAR_EC} (ex.: 1-3,7): "
+        f"\n{RED_EC}=>{CLEAR_EC} {WHITE_EC}Which tracks to download?{CLEAR_EC} (ex.: 1-3,7): "
     )
     try:
         download_list = parse_download_list(tracks)
