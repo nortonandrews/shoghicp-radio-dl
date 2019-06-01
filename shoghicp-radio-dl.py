@@ -55,7 +55,9 @@ def parse_download_list(string):
             # Treat ranges (ex.: 1-3)
             start = int(match[: match.find("-")])
             end = int(match[match.find("-") + 1 :])
-            download_list.add(list(range(start, end)))
+
+            for element in list(range(start, end)):
+                download_list.add(element)
         else:
             # Treat isolated numbers
             download_list.add(int(match))
