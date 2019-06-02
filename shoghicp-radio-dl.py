@@ -12,7 +12,7 @@ import requests
 API_KEY = ""
 
 # Feel free to change.
-DOWNLOAD_THREADS = 4
+DOWNLOAD_THREADS = 2
 DOWNLOAD_DIRECTORY = "~/Media/Music/Unorganized"
 FILENAME_FORMAT = lambda x: f'{x["artist"]} - {x["title"]}' # set to False to keep original filename
 FOLDERNAME_FORMAT = lambda x: f'{x["album"]}' # set to False to avoid creating album folders
