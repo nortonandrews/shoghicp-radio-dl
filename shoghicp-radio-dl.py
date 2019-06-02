@@ -99,11 +99,18 @@ def main():
 
     # Download files
     pool = multiprocessing.Pool(DOWNLOAD_THREADS)
+    threads = []
     for i, result in enumerate(res, 1):
         if i in download_list:
-            pool.apply_async(download_file, args=(result,))
+            threads.append(pool.apply_async(download_file, args=(result,)))
     pool.close()
+
+    # Re-raise any exceptions that happened in the download threads
+    [thread.get() for thread in threads]
+
+    # Wait for all threads to finish
     pool.join()
+
     print(f"{RED_EC}=>{CLEAR_EC} {WHITE_EC}Done!{CLEAR_EC}")
 
 
