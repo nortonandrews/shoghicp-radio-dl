@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import sys
+import urllib.parse
 import requests
 
 # Change this to your own API key.
@@ -13,8 +14,8 @@ API_KEY = ""
 # Feel free to change.
 DOWNLOAD_THREADS = 4
 DOWNLOAD_DIRECTORY = "~/Media/Music/Unorganized"
-FILENAME_FORMAT = lambda x: f'{x["artist"]} - {x["title"]}'
-FOLDERNAME_FORMAT = lambda x: f'{x["album"]}'
+FILENAME_FORMAT = lambda x: f'{x["artist"]} - {x["title"]}' # set to False to keep original filename
+FOLDERNAME_FORMAT = lambda x: f'{x["album"]}' # set to False to avoid creating album folders
 
 # Terminal color escape codes.
 CLEAR_EC = "\x1b[0m"
@@ -27,20 +28,38 @@ GRAY_EC = "\x1b[1;30m"
 
 def download_file(result):
     """Downloads a single track to disk."""
-    filename = FILENAME_FORMAT(result).replace("\\", "_")
-    foldername = FOLDERNAME_FORMAT(result)
     download_url = f'https://radio.animebits.moe/api/download/{result["hash"]}'
 
-    print(f" {GRAY_EC}* Downloading:{CLEAR_EC} {WHITE_EC}{filename}{CLEAR_EC}")
+    print(f" {GRAY_EC}* Downloading:{CLEAR_EC} {WHITE_EC}{result['artist']} - {result['title']} ({result['album']}){CLEAR_EC}")
     with requests.get(download_url, auth=("", API_KEY), stream=True) as dl_req:
         # Fetch real filename from content-disposition header so we know which
-        # extension to append to the downloaded file.
-        real_filename = re.findall(
-            "filename=(.+)", dl_req.headers["content-disposition"]
-        )[0]
-        extension = real_filename[real_filename.rfind(".") + 1 : -1]
-        filename += f".{extension}"
+        # extension to append to the downloaded file when renaming it.
+        try:
+            # Handle UTF-8 filenames
+            real_filename = urllib.parse.unquote(re.findall(
+                r"filename\*=utf-8''(.+)", dl_req.headers["content-disposition"]
+            )[0])
+        except IndexError:
+            # Handle ASCII filenames
+            real_filename = re.findall(
+                "filename=\"(.+)\"", dl_req.headers["content-disposition"]
+            )[0]
 
+        # Don't create album folders if FOLDERNAME_FORMAT == False
+        try:
+            foldername = FOLDERNAME_FORMAT(result)
+        except TypeError:
+            foldername = ''
+
+        # Don't rename files if FILENAME_FORMAT == False
+        try:
+            filename = FILENAME_FORMAT(result).replace("\\", "_")
+            extension = real_filename[real_filename.rfind(".") + 1 :]
+            filename += f".{extension}"
+        except TypeError:
+            filename = real_filename
+
+        # Create directory, write file
         os.makedirs(os.path.join(DOWNLOAD_DIRECTORY, foldername), exist_ok=True)
         with open(os.path.join(DOWNLOAD_DIRECTORY, foldername, filename), "wb") as file:
             shutil.copyfileobj(dl_req.raw, file)
